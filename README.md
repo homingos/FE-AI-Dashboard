@@ -52,9 +52,6 @@ Follow these instructions to get a copy of the project up and running on your lo
     RUNPOD_API_KEY="your_runpod_api_key_here"
     
     # Endpoints for each model
-    RUNPOD_ENDPOINT_CLOTHES="https://api.runpod.ai/v2/flly0i46nthx6x"
-    RUNPOD_ENDPOINT_PBRMAP="https://api.runpod.ai/v2/23d00ny4wln7vq"
-    # Add other endpoints as needed...
     RUNPOD_ENDPOINT_COMPOSITION="https://api.runpod.ai/v2/your_composition_id"
     ```
 
