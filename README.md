@@ -1,4 +1,4 @@
-# Flam AI Dashboard
+# Flam AI Dashboard🚀
 
 Welcome to the Flam AI Dashboard, a modern, responsive web application built with Next.js and TypeScript. This platform serves as a central hub to interact with a suite of powerful, independently-hosted AI models through a sleek, futuristic user interface.
 
