@@ -35,8 +35,8 @@ Follow these instructions to get a copy of the project up and running on your lo
 
 1.  **Clone the repository:**
     ```bash
-    git clone https://github.com/YourUsername/Your-Repo-Name.git
-    cd Your-Repo-Name
+    git clone https://github.com/VinayakRai5/FlamAI-DashboardV2.git
+    cd FlamAI-DashboardV2
     ```
 
 2.  **Install dependencies:**
