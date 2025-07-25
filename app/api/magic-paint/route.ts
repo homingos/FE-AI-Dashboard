@@ -1,20 +1,18 @@
-// FILE: app/api/magic-paint/route.ts
-
 import { NextResponse } from "next/server";
 
-// Define the endpoints
-const RUNPOD_ENDPOINT = "https://api.runpod.ai/v2/ltmusc3gbyqjrr";
-const RESOURCE_API_URL = "https://fi.development.flamapis.com/resource-svc/api/v1/resources";
+const RUNPOD_ENDPOINT = process.env.RUNPOD_ENDPOINT_WALLPAINT;
+const RESOURCE_API_URL = process.env.RESOURCE_API_URL;
 
-// This is the single, exported function that handles all POST requests.
-// This structure will fix the 405 error.
 export async function POST(request: Request) {
     try {
-        // Read the request body ONCE at the top
+        // Check if all necessary environment variables are set
+        if (!RUNPOD_ENDPOINT || !RESOURCE_API_URL || !process.env.RUNPOD_API_KEY) {
+            console.error("Missing required environment variables for magic-paint API route.");
+            return NextResponse.json({ error: "API endpoint is not configured correctly on the server." }, { status: 500 });
+        }
+
         const body = await request.json();
         const { action } = body;
-
-        // --- Router logic based on the 'action' field ---
 
         if (action === 'getSignedUrl') {
             const { fileName, fileType } = body;
@@ -34,8 +32,8 @@ export async function POST(request: Request) {
 
             const data = await response.json();
             const responseData = data.data || data;
-            const signedUrl = responseData.signed_url || responseData.upload_url || responseData.signedUrl || responseData.uploadUrl || responseData.url;
-            const fileUrl = responseData.resource_url || responseData.file_url || responseData.download_url || responseData.fileUrl || responseData.downloadUrl || responseData.public_url || responseData.publicUrl;
+            const signedUrl = responseData.signed_url || responseData.upload_url;
+            const fileUrl = responseData.resource_url || responseData.file_url;
 
             if (!signedUrl || !fileUrl) {
                 console.error("API Response Missing Keys (getSignedUrl):", responseData);
@@ -57,8 +55,13 @@ export async function POST(request: Request) {
                 body: JSON.stringify(payload)
             });
             
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error(`Runpod API Error (Status ${response.status}):`, errorText);
+                return NextResponse.json({ error: `Runpod API Error: ${errorText}` }, { status: response.status });
+            }
             const data = await response.json();
-            return NextResponse.json(data, { status: response.status });
+            return NextResponse.json(data);
 
         } else if (action === 'runpod_status') {
              const { endpoint } = body;
@@ -66,20 +69,22 @@ export async function POST(request: Request) {
 
              const response = await fetch(fullUrl, {
                 method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${process.env.RUNPOD_API_KEY}`
-                }
+                headers: { 'Authorization': `Bearer ${process.env.RUNPOD_API_KEY}` }
             });
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error(`Runpod Status API Error (Status ${response.status}):`, errorText);
+                return NextResponse.json({ error: `Runpod API Error: ${errorText}` }, { status: response.status });
+            }
             const data = await response.json();
-            return NextResponse.json(data, { status: response.status });
+            return NextResponse.json(data);
         }
 
-        // If the 'action' is none of the above
         return NextResponse.json({ error: `Invalid action: ${action}` }, { status: 400 });
 
     } catch (error) {
-        console.error("General Error in /api/magic-paint:", error);
         const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+        console.error("General Error in /api/magic-paint:", error);
         return NextResponse.json({ error: 'Internal Server Error', details: errorMessage }, { status: 500 });
     }
 }
