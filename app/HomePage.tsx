@@ -198,12 +198,20 @@ export default function HomePage() {
       <nav className="relative z-10 border-b border-cyan-500/30 backdrop-blur-xl bg-black/60">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-20">
-            <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="flex items-center space-x-3">
-              <div className="flex items-center justify-center w-10 h-10"><img src="/flamlogo1.svg" alt="Flam AI Logo" className="w-10 h-10" /></div>
-              <span className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">Flam AI Dashboard</span>
-            </motion.div>
+            {/* --- THIS IS THE CORRECTED LOGO/TITLE LINK --- */}
+            <Link href="/" className="flex items-center space-x-3">
+              <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
+                <div className="flex items-center justify-center w-10 h-10">
+                  <img src="/flamlogo1.svg" alt="Flam AI Logo" className="w-10 h-10" />
+                </div>
+              </motion.div>
+              <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }}>
+                <span className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">
+                  Flam AI Dashboard
+                </span>
+              </motion.div>
+            </Link>
             <div className="hidden lg:flex items-center space-x-6">
-              {/* --- THIS IS THE CORRECTED NAVIGATION --- */}
               {models.slice(0, 4).map((model, index) => (
                 <Link key={model.id} href={model.link} passHref>
                   <motion.div
@@ -223,8 +231,7 @@ export default function HomePage() {
         </div>
       </nav>
 
-      {/* ... The rest of the page (Hero, Carousel, Models Showcase) remains unchanged ... */}
-
+      {/* ... The rest of the page is unchanged ... */}
       <section className="relative z-10 py-16 lg:py-24">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
