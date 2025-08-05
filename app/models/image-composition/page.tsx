@@ -150,16 +150,26 @@ export default function ImageCompositionPage() {
     const handleProcessImage = async (compositeBase64: string) => {
         setIsLoading(true); setIsError(false); setOutputImage(null); setStatusMessage("Dispatching to AI Core...");
         try {
-            const payload = { input: { image_base64: compositeBase64 } };
+            const payload = { input: { image_data: compositeBase64 } };
             const response = await fetch('/api/image-composition', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ payload }) });
             const result = await response.json();
             if (!response.ok) throw new Error(result.error || "API request failed.");
+            
+            console.log("Full API response received:", result);
+
             const status = result.status?.toLowerCase();
             if (status === 'success' || status === 'completed') {
-                const b64 = result.output?.image_base64 || result.output;
-                if (b64) { setOutputImage(`data:image/png;base64,${b64}`); setStatusMessage("✅ AI Processing complete!"); } 
-                else { throw new Error("Processing succeeded, but no image was returned."); }
-            } else { throw new Error(result.error || `Processing failed with status: ${status}`); }
+                const b64 = result.output?.processed_image;
+                if (b64 && typeof b64 === 'string') {
+                    setOutputImage(`data:image/png;base64,${b64}`);
+                    setStatusMessage("✅ AI Processing complete!");
+                } else {
+                    console.error("API response missing valid base64 string at 'output.processed_image':", result);
+                    throw new Error("Processing succeeded, but image data was not returned in the expected format.");
+                }
+            } else {
+                throw new Error(result.error || `Processing failed with status: ${status}`);
+            }
         } catch (error: any) {
             console.error(error);
             setStatusMessage(`❌ Error: ${error.message}`);
@@ -194,6 +204,7 @@ export default function ImageCompositionPage() {
                             </Badge>
                         </div>
                     </motion.div>
+
                     <div className="flex-1 grid grid-cols-12 gap-6 min-h-0">
                         <div className="col-span-9 h-full min-h-0">
                             <ImageEditor onProcess={handleProcessImage} isProcessing={isLoading} />
@@ -206,7 +217,6 @@ export default function ImageCompositionPage() {
                                         {isLoading && <Loader2 className="w-12 h-12 text-red-400 animate-spin" />}
                                         {!isLoading && outputImage && (
                                             <>
-                                                {/* --- THIS IS THE CORRECTED IMAGE TAG --- */}
                                                 <img src={outputImage} alt="AI Processed Result" className="w-full h-full object-contain rounded-md" />
                                                 <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                                     <Button asChild size="icon" variant="ghost" className="h-8 w-8 text-white hover:bg-white/20"><a href={outputImage} download="ai-result.png"><Download className="h-4 w-4"/></a></Button>
