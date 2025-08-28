@@ -273,7 +273,7 @@ export default function Playground({ // <-- CHANGED BACK TO export default
     <>
       <PlaygroundHeader
         logo={logo}
-        title="Flam Conversational Ai"
+        title="Flam Conversational AI"
         height={headerHeight}
         accentColor={settings.theme_color}
         connectionState={roomState}
