@@ -1,30 +1,29 @@
 "use client";
 
-import { useState } from "react"
-import Link from "next/link"
-import { motion, AnimatePresence } from "framer-motion"
+import { useState } from "react";
+import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
 import {
-  Brain,
-  Zap,
-  Eye,
-  Palette,
-  Scissors,
-  Bot,
-  ChevronLeft,
-  ChevronRight,
-  User,
-  Star,
-  ArrowRight,
-  ArrowLeft,
-  Layers,
-  Shirt,
-  Blend,
-} from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+  Brain, Zap, Eye, Palette, Scissors, Bot, ChevronLeft, ChevronRight, User, Star, ArrowRight, ArrowLeft, Layers, Shirt, Blend, Mic,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 const models = [
+  {
+    id: "livekit-agent",
+    name: "Realtime Talking Agent",
+    description: "Interact with a multimodal AI agent in real-time using voice and video.",
+    icon: <Mic className="w-6 h-6" />,
+    color: "from-sky-500 to-indigo-600",
+    staticImage: "/images/agent-placeholder.png",
+    gif: "/gifs/agent-anim.gif",
+    owner: "Flam AI",
+    rating: 5.0,
+    uses: "New",
+    link: "/models/livekit-agent",
+  },
   {
     id: "image-composition",
     name: "Image Composition",
@@ -168,7 +167,7 @@ export default function HomePage() {
   const [carouselIndex, setCarouselIndex] = useState(0);
   const [hoveredModel, setHoveredModel] = useState<string | null>(null);
   
-  const modelsPerPage = 8;
+  const modelsPerPage = 9;
   const totalPages = Math.ceil(models.length / modelsPerPage);
 
   const getCurrentModels = () => {
@@ -198,7 +197,6 @@ export default function HomePage() {
       <nav className="relative z-10 border-b border-cyan-500/30 backdrop-blur-xl bg-black/60">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-20">
-            {/* --- THIS IS THE CORRECTED LOGO/TITLE LINK --- */}
             <Link href="/" className="flex items-center space-x-3">
               <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
                 <div className="flex items-center justify-center w-10 h-10">
@@ -231,7 +229,6 @@ export default function HomePage() {
         </div>
       </nav>
 
-      {/* ... The rest of the page is unchanged ... */}
       <section className="relative z-10 py-16 lg:py-24">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>

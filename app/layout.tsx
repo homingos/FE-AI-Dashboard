@@ -1,13 +1,12 @@
-// app/layout.tsx
+// /app/layout.tsx
 
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google'; // <-- 1. Import the 'Inter' font from next/font
+import { Inter } from 'next/font/google';
 import './globals.css';
+import { Toaster } from "@/components/ui/toaster";
 
-// 2. Initialize the font with desired subsets (e.g., 'latin' for English/European languages)
 const inter = Inter({ subsets: ['latin'] });
 
-// Your metadata is already well-defined! No changes needed here.
 export const metadata: Metadata = {
   title: 'Flam AI Dashboard',
   description: 'One-stop hub to explore, interact with, and deploy powerful AI models',
@@ -20,9 +19,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      {/* 3. Apply the font's className to the <body> tag for optimization */}
-      <body className={inter.className}>{children}</body>
+    <html lang="en" className="dark" suppressHydrationWarning>
+      <body className={inter.className} suppressHydrationWarning>
+        {children}
+        <Toaster />
+      </body>
     </html>
   );
 }
