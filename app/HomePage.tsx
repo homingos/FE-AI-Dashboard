@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Brain, Zap, Eye, Palette, Scissors, Bot, ChevronLeft, ChevronRight, User, Star, ArrowRight, ArrowLeft, Layers, Shirt, Blend, Mic,
+  Brain, Zap, Eye, Palette, Scissors, Bot, ChevronLeft, ChevronRight, User, Star, ArrowRight, ArrowLeft, Layers, Shirt, Blend, Mic, Paintbrush
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -63,6 +63,21 @@ const models = [
     uses: "5.1K",
     link: "/models/wall-painting",
   },
+  // --- NEW MODEL ADDED HERE ---
+  {
+    id: "wall-painting-v2",
+    name: "Wall Painting V2",
+    description: "Paint patches on your wall to generate multi-colored designs with AI.",
+    icon: <Paintbrush className="w-6 h-6" />,
+    color: "from-green-400 to-teal-600",
+    staticImage: "/images/wall.png",
+    gif: "/images/wall.png",
+    owner: "Flam AI",
+    rating: 5.0,
+    uses: "New",
+    link: "/models/wall-painting-v2",
+  },
+  // --- END OF NEW MODEL ---
   {
     id: "pbr-map-generator",
     name: "PBR Map Generator",

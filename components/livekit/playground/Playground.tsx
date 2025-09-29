@@ -265,7 +265,7 @@ export default function Playground({ // <-- CHANGED BACK TO export default
     setSettings,
     voiceAssistant.agent,
     handleRpcCall,
-    rpcMethod,
+    rpcMethod, 
     rpcPayload
   ]);
   
