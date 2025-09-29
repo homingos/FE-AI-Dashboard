@@ -123,7 +123,7 @@ interface Patch {
   color: string;
 }
 
-const PATCH_MAX_SIZE = 260;
+const PATCH_MAX_SIZE = 200;
 
 export default function WallPaintingV2Page() {
   const [originalImage, setOriginalImage] = useState<HTMLImageElement | null>(null);
