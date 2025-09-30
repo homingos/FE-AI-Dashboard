@@ -116,17 +116,11 @@ const NEW_COLORS = [
   { name: "Guava Pink-N", hex: "#EE8486" },
 ];
 
-interface Patch {
-  id: number;
-  x: number;
-  y: number;
-  color: string;
-}
+interface Patch { id: number; x: number; y: number; color: string; }
 
 const PATCH_MAX_SIZE = 200;
 
 export default function WallPaintingV2Page() {
-  const [originalImage, setOriginalImage] = useState<HTMLImageElement | null>(null);
   const [resizedImage, setResizedImage] = useState<HTMLImageElement | null>(null);
   const [outputImageUrl, setOutputImageUrl] = useState<string | null>(null);
   const [selectedColor, setSelectedColor] = useState<string>(NEW_COLORS[0].hex);
@@ -141,6 +135,9 @@ export default function WallPaintingV2Page() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [starImage, setStarImage] = useState<HTMLImageElement | null>(null);
   const [aspectRatio, setAspectRatio] = useState<number>(16 / 9);
+  const [jobId, setJobId] = useState<string | null>(null);
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const [fullscreenImageUrl, setFullscreenImageUrl] = useState<string | null>(null);
 
 
   useEffect(() => {
@@ -155,26 +152,15 @@ export default function WallPaintingV2Page() {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
-
     let { width, height } = image;
-    
     setAspectRatio(width / height);
-
     if (width > height) {
-      if (width > MAX_DIMENSION) {
-        height = Math.round((height * MAX_DIMENSION) / width);
-        width = MAX_DIMENSION;
-      }
+      if (width > MAX_DIMENSION) { height = Math.round((height * MAX_DIMENSION) / width); width = MAX_DIMENSION; }
     } else {
-      if (height > MAX_DIMENSION) {
-        width = Math.round((width * MAX_DIMENSION) / height);
-        height = MAX_DIMENSION;
-      }
+      if (height > MAX_DIMENSION) { width = Math.round((width * MAX_DIMENSION) / height); height = MAX_DIMENSION; }
     }
-    canvas.width = width;
-    canvas.height = height;
+    canvas.width = width; canvas.height = height;
     ctx.drawImage(image, 0, 0, width, height);
-
     const resizedImg = new Image();
     resizedImg.onload = () => setResizedImage(resizedImg);
     resizedImg.src = canvas.toDataURL('image/jpeg');
@@ -186,15 +172,11 @@ export default function WallPaintingV2Page() {
       const reader = new FileReader();
       reader.onloadend = () => {
         const img = new Image();
-        img.onload = () => {
-            setOriginalImage(img);
-            resizeImage(img);
-        };
+        img.onload = () => resizeImage(img);
         img.src = reader.result as string;
       };
       reader.readAsDataURL(file);
-      setOutputImageUrl(null);
-      setPatches([]);
+      setOutputImageUrl(null); setPatches([]);
       setStatusMessage("Image loaded. Click on the image to add a color patch.");
       setIsError(false);
     }
@@ -203,21 +185,14 @@ export default function WallPaintingV2Page() {
   const drawCanvas = useCallback(() => {
     const canvas = canvasRef.current;
     const ctx = canvas?.getContext('2d');
-    
     if (!ctx || !canvas || !resizedImage) return;
-
-    canvas.width = resizedImage.width;
-    canvas.height = resizedImage.height;
+    canvas.width = resizedImage.width; canvas.height = resizedImage.height;
     ctx.drawImage(resizedImage, 0, 0, canvas.width, canvas.height);
-
     if (!starImage || patches.length === 0) return;
-
     const offscreenCanvas = document.createElement('canvas');
-    offscreenCanvas.width = PATCH_MAX_SIZE;
-    offscreenCanvas.height = PATCH_MAX_SIZE;
+    offscreenCanvas.width = PATCH_MAX_SIZE; offscreenCanvas.height = PATCH_MAX_SIZE;
     const offscreenCtx = offscreenCanvas.getContext('2d');
     if (!offscreenCtx) return;
-
     for (const patch of patches) {
       offscreenCtx.clearRect(0, 0, PATCH_MAX_SIZE, PATCH_MAX_SIZE);
       offscreenCtx.drawImage(starImage, 0, 0, PATCH_MAX_SIZE, PATCH_MAX_SIZE);
@@ -231,81 +206,122 @@ export default function WallPaintingV2Page() {
     }
   }, [resizedImage, patches, starImage]);
 
-
-  useEffect(() => {
-    drawCanvas();
-  }, [drawCanvas]);
+  useEffect(() => { drawCanvas(); }, [drawCanvas]);
   
   const handleCanvasClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
-      if (!resizedImage) return;
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-      
+      if (!resizedImage) return; const canvas = canvasRef.current; if (!canvas) return;
       const rect = canvas.getBoundingClientRect();
-      const scaleX = canvas.width / rect.width;
-      const scaleY = canvas.height / rect.height;
-      const x = (event.clientX - rect.left) * scaleX;
-      const y = (event.clientY - rect.top) * scaleY;
-
-      if (patches.length < 5) {
-        setPatches(prev => [...prev, { id: Date.now(), x, y, color: selectedColor }]);
-      }
+      const scaleX = canvas.width / rect.width; const scaleY = canvas.height / rect.height;
+      const x = (event.clientX - rect.left) * scaleX; const y = (event.clientY - rect.top) * scaleY;
+      if (patches.length < 5) { setPatches(prev => [...prev, { id: Date.now(), x, y, color: selectedColor }]); }
   };
 
-  const undoLastPatch = () => {
-      setPatches(prev => prev.slice(0, -1));
-  };
-
-  const handleDownloadPatchedImage = () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const link = document.createElement('a');
-    link.download = `patched-input-${Date.now()}.jpg`;
-    link.href = canvas.toDataURL('image/jpeg');
-    link.click();
-  };
+  const undoLastPatch = () => { setPatches(prev => prev.slice(0, -1)); };
+  const handleDownloadPatchedImage = () => { const canvas = canvasRef.current; if (!canvas) return; const link = document.createElement('a'); link.download = `patched-input-${Date.now()}.jpg`; link.href = canvas.toDataURL('image/jpeg'); link.click(); };
   
+  const stopPolling = () => { if (pollingIntervalRef.current) { clearInterval(pollingIntervalRef.current); pollingIntervalRef.current = null; }};
+
+  const handleCheckStatus = useCallback(async (currentJobId: string) => {
+    if (!currentJobId) return;
+    setLoadingStep(`Polling job: ${currentJobId.slice(0, 8)}...`);
+    try {
+      const response = await fetch('/api/wall-painting-v2', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'runpod_status', jobId: currentJobId }) });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Failed to fetch status.");
+      
+      switch (result.status) {
+        case "COMPLETED":
+          stopPolling();
+          setLoadingProgress(100);
+          const outputUrl = result.output?.data?.output_url;
+          if (typeof outputUrl === 'string' && outputUrl.length > 0) {
+            setOutputImageUrl(outputUrl.split('?')[0]);
+            setStatusMessage(`✅ Job ${currentJobId.slice(0, 8)} Completed!`);
+          } else {
+            setStatusMessage(`⚠️ Job completed, but output URL is missing.`);
+            setIsError(true);
+          }
+          setIsLoading(false);
+          break;
+        case "IN_PROGRESS":
+        case "IN_QUEUE":
+          setLoadingProgress(95);
+          setStatusMessage(`⏳ Job is ${result.status.toLowerCase().replace('_', ' ')}...`);
+          break;
+        case "FAILED":
+          stopPolling();
+          setStatusMessage(`❌ Job failed. Error: ${result.error || 'Unknown error'}`);
+          setIsLoading(false);
+          setIsError(true);
+          break;
+      }
+    } catch (error: any) {
+      stopPolling();
+      setStatusMessage(`❌ Error checking status: ${error.message}`);
+      setIsError(true);
+      setIsLoading(false);
+    }
+  }, []);
+
+  const startPolling = (id: string) => {
+    stopPolling();
+    pollingIntervalRef.current = setInterval(() => handleCheckStatus(id), 3000);
+  };
+
   const processImage = async () => {
     const canvas = canvasRef.current;
     if (!canvas) { setStatusMessage("Canvas not ready."); setIsError(true); return; }
-    setIsLoading(true); setIsError(false); setOutputImageUrl(null); setLoadingProgress(0);
+    setIsLoading(true); setIsError(false); setOutputImageUrl(null); stopPolling(); setLoadingProgress(0);
     try {
-        setLoadingStep("1/4: Preparing patched image..."); setLoadingProgress(10);
-        const imageBlob: Blob | null = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg'));
-        if (!imageBlob) throw new Error("Could not generate image from canvas.");
-        const patchedFile = new File([imageBlob], `patched_${Date.now()}.jpg`, { type: 'image/jpeg' });
-        setLoadingStep("2/4: Requesting secure upload links..."); setLoadingProgress(30);
-        const getSignedUrl = async (file: File): Promise<{ signedUrl: string, fileUrl: string }> => {
-            const response = await fetch('/api/wall-painting-v2', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'getSignedUrl', fileName: file.name, fileType: file.type }), });
-            if (!response.ok) { const error = await response.json(); throw new Error(error.error || "Failed to get signed URL.")};
-            return response.json();
-        };
-        const [inputUrlData, outputUrlData] = await Promise.all([
-            getSignedUrl(patchedFile),
-            getSignedUrl(new File([], `output_${Date.now()}.jpg`, { type: 'image/jpeg' }))
-        ]);
-        setLoadingStep("3/4: Uploading patched image..."); setLoadingProgress(50);
-        await fetch(inputUrlData.signedUrl, { method: 'PUT', headers: { 'Content-Type': patchedFile.type }, body: patchedFile });
-        setLoadingStep("4/4: Dispatching job to AI Core..."); setLoadingProgress(75);
-        const cleanInputUrl = inputUrlData.fileUrl.split('?')[0];
-        const cleanOutputUrl = outputUrlData.signedUrl;
-        const payload = { input: { img_url: cleanInputUrl, output_signed_url: cleanOutputUrl } };
-        const runpodResponse = await fetch('/api/wall-painting-v2', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'runpod', payload }) });
-        const result = await runpodResponse.json();
-        if (!runpodResponse.ok) throw new Error(result.error || "Runpod API request failed.");
-        if (result.status === "COMPLETED" && result.output?.output_url) {
-            setLoadingProgress(100);
-            setOutputImageUrl(result.output.output_url.split('?')[0]);
-            setStatusMessage("✅ Success! Your wall has been repainted.");
-        } else {
-            throw new Error(result.error || "Sync processing did not complete successfully.");
-        }
+      setLoadingStep("1/4: Preparing patched image..."); setLoadingProgress(10);
+      const imageBlob: Blob | null = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg'));
+      if (!imageBlob) throw new Error("Could not generate image from canvas.");
+      const patchedFile = new File([imageBlob], `patched_${Date.now()}.jpg`, { type: 'image/jpeg' });
+      
+      setLoadingStep("2/4: Requesting secure upload links..."); setLoadingProgress(30);
+      const getSignedUrl = async (file: File): Promise<{ signedUrl: string, fileUrl: string }> => {
+          const response = await fetch('/api/wall-painting-v2', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'getSignedUrl', fileName: file.name, fileType: file.type }), });
+          if (!response.ok) { const error = await response.json(); throw new Error(error.error || "Failed to get signed URL.")};
+          return response.json();
+      };
+      const [inputUrlData, outputUrlData] = await Promise.all([
+          getSignedUrl(patchedFile),
+          getSignedUrl(new File([], `output_${Date.now()}.jpg`, { type: 'image/jpeg' }))
+      ]);
+      
+      setLoadingStep("3/4: Uploading patched image..."); setLoadingProgress(50);
+      await fetch(inputUrlData.signedUrl, { method: 'PUT', headers: { 'Content-Type': patchedFile.type }, body: patchedFile });
+      
+      setLoadingStep("4/4: Dispatching job to AI Core..."); setLoadingProgress(75);
+      const cleanInputUrl = inputUrlData.fileUrl.split('?')[0];
+      const cleanOutputUrl = outputUrlData.signedUrl;
+      
+      const runpodResponse = await fetch('/api/wall-painting-v2', { 
+          method: 'POST', 
+          headers: { 'Content-Type': 'application/json' }, 
+          body: JSON.stringify({ 
+              action: 'runpod_run',
+              data_from_frontend: {
+                  img_url: cleanInputUrl,
+                  output_signed_url: cleanOutputUrl 
+              }
+          }) 
+      });
+
+      const result = await runpodResponse.json();
+      if (!runpodResponse.ok) throw new Error(result.error || "Runpod API request failed.");
+
+      if (result.id) {
+        setJobId(result.id);
+        setStatusMessage(`🚀 Job submitted! ID: ${result.id.slice(0,8)}. Checking status...`);
+        startPolling(result.id);
+      } else {
+        throw new Error("Did not receive a job ID from the server.");
+      }
     } catch (error: any) {
-        console.error(error);
-        setStatusMessage(`❌ Error: ${error.message}`);
-        setIsError(true);
-    } finally {
-        setIsLoading(false);
+      console.error(error);
+      setStatusMessage(`❌ Error: ${error.message}`);
+      setIsLoading(false);
     }
   };
 
@@ -313,9 +329,9 @@ export default function WallPaintingV2Page() {
     <>
       <AnimatedBackground />
       <AnimatePresence>
-        {isFullscreen && outputImageUrl && (
+        {isFullscreen && fullscreenImageUrl && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm" onClick={() => setIsFullscreen(false)}>
-            <motion.img src={outputImageUrl} alt="Fullscreen result" className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg shadow-2xl" onClick={(e) => e.stopPropagation()} />
+            <motion.img src={fullscreenImageUrl} alt="Fullscreen view" className="max-w-[90vw] max-h-[90vh] object-contain rounded-lg shadow-2xl" onClick={(e) => e.stopPropagation()} />
             <Button variant="ghost" size="icon" className="absolute top-4 right-4 text-white hover:bg-white/20" onClick={() => setIsFullscreen(false)}><X className="w-6 h-6" /></Button>
           </motion.div>
         )}
@@ -330,9 +346,21 @@ export default function WallPaintingV2Page() {
                     <CardHeader><CardTitle className="flex items-center text-green-400"><Paintbrush className="w-6 h-6 mr-3" />Controls</CardTitle></CardHeader>
                     <CardContent className="space-y-6">
                         <motion.div variants={{hidden: {opacity: 0, y:10}, visible:{opacity:1, y:0}}}>
-                            <label className="font-semibold text-gray-300">1. Upload & Patch Image</label>
+                            <div className="flex justify-between items-center mb-2">
+                                <label className="font-semibold text-gray-300">1. Upload & Patch Image</label>
+                                {resizedImage && (
+                                    <Button variant="ghost" size="icon" className="w-7 h-7 text-gray-400 hover:text-white" title="View Fullscreen" onClick={() => {
+                                        if (canvasRef.current) {
+                                            setFullscreenImageUrl(canvasRef.current.toDataURL('image/jpeg'));
+                                            setIsFullscreen(true);
+                                        }
+                                    }}>
+                                        <Expand className="w-4 h-4" />
+                                    </Button>
+                                )}
+                            </div>
                             <div 
-                              className="mt-2 glowing-border-green rounded-lg flex items-center justify-center text-center bg-black/20"
+                              className="glowing-border-green rounded-lg flex items-center justify-center text-center bg-black/20"
                               style={{ aspectRatio: resizedImage ? aspectRatio : 16/9 }}
                               onClick={() => !resizedImage && fileInputRef.current?.click()}
                             >
@@ -378,9 +406,12 @@ export default function WallPaintingV2Page() {
               <Card className="bg-gray-900/60 border-transparent backdrop-blur-sm min-h-[500px] glowing-border-green glowing-border-green-active">
                 <CardHeader><CardTitle className="flex items-center text-green-400"><Sparkles className="w-6 h-6 mr-3" />Result</CardTitle></CardHeader>
                 <CardContent className="flex flex-col items-center justify-center h-full">
-                  <div className="w-full h-80 bg-gray-800/50 rounded-lg flex items-center justify-center overflow-hidden p-2 relative group">
+                  <div 
+                    className="w-full bg-gray-800/50 rounded-lg flex items-center justify-center overflow-hidden p-2 relative group"
+                    style={{ aspectRatio: resizedImage ? aspectRatio : 16/9 }}
+                  >
                     {isLoading ? <div className="text-center text-gray-300 space-y-4"><Server className="w-12 h-12 text-green-400" /><p className="font-mono">{loadingStep}</p><div className="w-full bg-gray-700 h-2.5 rounded-full"><motion.div className="bg-gradient-to-r from-green-500 to-teal-500 h-2.5 rounded-full" initial={{width:'0%'}} animate={{width:`${loadingProgress}%`}}/></div><p className="font-mono text-green-400">{Math.round(loadingProgress)}%</p></div> : 
-                      outputImageUrl ? (<> <motion.img src={outputImageUrl} alt="Generated map" className="w-full h-full object-contain rounded-md"/> <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity"><Button asChild variant="ghost" size="icon" className="text-white hover:bg-white/20" title="Download"><a href={outputImageUrl} download={`wall-paint-v2-${Date.now()}.jpg`}><Download className="w-5 h-5"/></a></Button><Button variant="ghost" size="icon" className="text-white hover:bg-white/20" title="Fullscreen" onClick={() => { setIsFullscreen(true); }}><Expand className="w-5 h-5"/></Button></div> </>) : 
+                      outputImageUrl ? (<> <motion.img src={outputImageUrl} alt="Generated map" className="w-full h-full object-contain rounded-md"/> <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity"><Button asChild variant="ghost" size="icon" className="text-white hover:bg-white/20" title="Download"><a href={outputImageUrl} download={`wall-paint-v2-${Date.now()}.jpg`}><Download className="w-5 h-5"/></a></Button><Button variant="ghost" size="icon" className="text-white hover:bg-white/20" title="Fullscreen" onClick={() => { setFullscreenImageUrl(outputImageUrl); setIsFullscreen(true); }}><Expand className="w-5 h-5"/></Button></div> </>) : 
                       <div className="text-center text-gray-500"><Palette className="w-16 h-16 mx-auto"/><p className="mt-4">Your result will appear here</p></div>}
                   </div>
                   <div className="mt-4 w-full p-4 rounded-lg bg-black/30 border border-gray-700">
