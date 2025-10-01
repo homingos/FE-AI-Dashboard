@@ -25,7 +25,6 @@ const NEW_COLORS = [
   { name: "Apricot Cream", hex: "#B98D89" },
   { name: "Warm Tobacco", hex: "#6A5D64" },
   { name: "Tea Rose", hex: "#A57D76" },
-  { name: "Royal Satin", hex: "#6D4358" },
   { name: "Purple Martini-N", hex: "#8F588E" },
   { name: "Regal Air-N", hex: "#4C4556" },
   { name: "Rajputana Purple-N", hex: "#656195" },
