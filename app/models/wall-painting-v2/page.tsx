@@ -30,7 +30,6 @@ const NEW_COLORS = [
   { name: "Rajputana Purple-N", hex: "#656195" },
   { name: "Purple Pansy", hex: "#6E6C7B" },
   { name: "Night Swimming-N", hex: "#384251" },
-  { name: "Mariner’s Muse-N", hex: "#1D739D" },
   { name: "Isle of Capri", hex: "#517D87" },
   { name: "Reef Green", hex: "#2B5D5F" },
   { name: "Shifting Tide-N", hex: "#00896C" },
