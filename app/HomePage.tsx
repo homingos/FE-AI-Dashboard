@@ -20,7 +20,7 @@ const models = [
     staticImage: "/images/agent-placeholder.png",
     gif: "/gifs/agent-anim.gif",
     owner: "Flam AI",
-    rating: 4.1,
+    rating: 4.2,
     uses: "New",
     link: "/models/livekit-agent",
   },
